@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>💖 Ultimate Budget Tracker for My Love 💖</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg: #fff0f5;
+      --text: #333;
+      --accent: #d63384;
+      --card: #ffffff;
+    }
+    body.dark-mode {
+      --bg: #1e1e2f;
+      --text: #f0f0f0;
+      --accent: #ff79c6;
+      --card: #2c2c3e;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: auto;
+      transition: all 0.3s;
+    }
+    h1 {
+      text-align: center;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    .theme-toggle {
+      display: block;
+      margin: 0 auto 2rem auto;
+      padding: 0.6rem 1.5rem;
+      border: none;
+      background-color: var(--accent);
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .box {
+      background: var(--card);
+      padding: 1.5rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: var(--card);
+      color: var(--text);
+    }
+    button.submit {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button.submit:hover {
+      opacity: 0.9;
+    }
+    .status {
+      padding: 1rem;
+      border-radius: 8px;
+      background-color: #fde2e4;
+      font-weight: bold;
+      color: #990000;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border-bottom: 1px solid #eee;
+      padding: 12px;
+      text-align: left;
+    }
+    .download {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .download a {
+      color: var(--accent);
+      font-weight: bold;
+      text-decoration: none;
+    }
+    footer {
+      text-align: center;
+      font-size: 14px;
+      color: #777;
+      margin-top: 3rem;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 1rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+    .card h4 {
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .search-bar {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle" onclick="toggleTheme()">🌗 Toggle Light/Dark</button>
+  <h1>💖 Budget Tracker Made With Love 💖</h1>
+
+  <div class="cards-grid">
+    <div class="card">
+      <h4>Total Spent</h4>
+      <p>R{{ total_spent }}</p>
+    </div>
+    <div class="card">
+      <h4>Budget</h4>
+      <p>R{{ budget }}</p>
+    </div>
+    <div class="card">
+      <h4>Remaining</h4>
+      <p>R{{ remaining }}</p>
+    </div>
+  </div>
+
+  <div class="box">
+    <h3>Budget Status</h3>
+    <p class="status">{{ status }}</p>
+  </div>
+
+  <div class="box">
+    <h3>Set Your Monthly Budget</h3>
+    <form action="/set_budget" method="POST">
+      <input type="number" name="budget" step="0.01" placeholder="Enter budget amount" required>
+      <button type="submit" class="submit">Set Budget</button>
+    </form>
+  </div>
+
+  <div class="box">
+    <h3>Add New Expense</h3>
+    <form action="/add" method="POST">
+      <input type="date" name="date" required>
+      <input type="text" name="description" placeholder="Description (e.g. groceries)" required>
+      <input type="number" name="amount" step="0.01" placeholder="Amount" required>
+      <button type="submit" class="submit">Add Expense</button>
+    </form>
+  </div>
+
+  <div class="box">
+    <h3>Search Your Expenses</h3>
+    <form method="GET" action="/">
+      <input type="text" name="search" placeholder="Search by description or month (e.g. June)">
+      <button type="submit" class="submit">Search</button>
+    </form>
+  </div>
+
+  <div class="box">
+    <h3>Expense History</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Amount (R)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for expense in expenses %}
+        <tr>
+          <td>{{ expense.Date }}</td>
+          <td>{{ expense.Description }}</td>
+          <td>{{ expense.Amount }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="download">
+    <a href="/download">⬇️ Download Expense CSV</a>
+  </div>
+
+  <footer>
+    Made with 💖 just for you, my love. Every cent, counted with care.
+  </footer>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
+  </script>
+
+</body>
+</html>
