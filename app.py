@@ -1,23 +1,21 @@
-from flask import Flask, render_template, request, redirect, send_file, session, url_for
-import csv
-import os
+from flask import Flask, render_template, request, redirect, session, url_for
+import csv, os
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'  # Change this to something secure if going public
+app.secret_key = 'your_secret_key'  # Replace with something secure
 
-# Hardcoded login details
-USERNAME = "dylan"
-PASSWORD = "mywife"
+# Hardcoded credentials
+USERNAME = "you"
+PASSWORD = "love"
 
 DATA_FILE = 'expenses.csv'
 BUDGET_FILE = 'budget.txt'
 
-# ---------- Load and Save Functions ----------
 def load_expenses():
     expenses = []
     if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, newline='', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
+        with open(DATA_FILE, newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
             for row in reader:
                 try:
                     row['Amount'] = float(row['Amount'])
@@ -27,8 +25,8 @@ def load_expenses():
     return expenses
 
 def save_expense(date, description, amount):
-    with open(DATA_FILE, 'a', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
+    with open(DATA_FILE, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
         writer.writerow([date, description, amount])
 
 def load_budget():
@@ -44,38 +42,17 @@ def save_budget(budget):
     with open(BUDGET_FILE, 'w', encoding='utf-8') as f:
         f.write(str(budget))
 
-# ---------- Auth Routes ----------
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    error = None
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        if username == USERNAME and password == PASSWORD:
-            session['logged_in'] = True
-            return redirect(url_for('index'))
-        else:
-            error = 'Invalid login details'
-    return render_template('login.html', error=error)
-
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    return redirect(url_for('login'))
-
-# ---------- Main Routes ----------
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
     expenses = load_expenses()
-    total_spent = sum(expense['Amount'] for expense in expenses)
+    total_spent = sum(exp['Amount'] for exp in expenses)
     budget = load_budget()
     remaining = budget - total_spent
     status = "You're within budget!" if remaining >= 0 else "Over budget!"
 
-    # Pie Chart Data
     chart_labels = []
     chart_values = []
     category_totals = {}
@@ -93,7 +70,7 @@ def index():
         'data': chart_values
     }
 
-    return render_template('index.html',
+    return render_template("index.html",
                            expenses=expenses,
                            total_spent=total_spent,
                            budget=budget,
@@ -101,21 +78,34 @@ def index():
                            status=status,
                            chart_data=chart_data)
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        if request.form['username'] == USERNAME and request.form['password'] == PASSWORD:
+            session['logged_in'] = True
+            return redirect(url_for('index'))
+        else:
+            error = 'Incorrect username or password.'
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
 @app.route('/add', methods=['POST'])
 def add_expense():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    date = request.form['date']
-    description = request.form['description']
-    amount = request.form['amount']
-
     try:
-        amount = float(amount)
-        save_expense(date, description, amount)
-    except ValueError:
-        print("Invalid amount")
-
+        date = request.form['date']
+        desc = request.form['description']
+        amount = float(request.form['amount'])
+        save_expense(date, desc, amount)
+    except:
+        pass
     return redirect('/')
 
 @app.route('/set_budget', methods=['POST'])
@@ -123,21 +113,12 @@ def set_budget():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    budget = request.form['budget']
     try:
-        save_budget(float(budget))
-    except ValueError:
+        budget = float(request.form['budget'])
+        save_budget(budget)
+    except:
         pass
     return redirect('/')
 
-@app.route('/download')
-def download():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-
-    return send_file(DATA_FILE, as_attachment=True)
-
-# ---------- Main ----------
 if __name__ == '__main__':
-    print("✅ App is running!")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True)
