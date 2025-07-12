@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, redirect, send_file, session
+from flask import Flask, render_template, request, redirect, send_file, session, url_for
 import csv
 import os
 
 app = Flask(__name__)
-app.secret_key = 'super_secret_key'  # Replace with a stronger key in production
+app.secret_key = 'supersecretkey'  # Change this to something secure if going public
 
-# ----- Login credentials -----
+# Hardcoded login details
 USERNAME = "dylan"
 PASSWORD = "mywife"
 
@@ -44,7 +44,7 @@ def save_budget(budget):
     with open(BUDGET_FILE, 'w', encoding='utf-8') as f:
         f.write(str(budget))
 
-# ---------- Authentication Routes ----------
+# ---------- Auth Routes ----------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
@@ -53,21 +53,21 @@ def login():
         password = request.form['password']
         if username == USERNAME and password == PASSWORD:
             session['logged_in'] = True
-            return redirect('/')
+            return redirect(url_for('index'))
         else:
-            error = 'Invalid username or password'
+            error = 'Invalid login details'
     return render_template('login.html', error=error)
 
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
-    return redirect('/login')
+    return redirect(url_for('login'))
 
 # ---------- Main Routes ----------
 @app.route('/')
 def index():
     if not session.get('logged_in'):
-        return redirect('/login')
+        return redirect(url_for('login'))
 
     expenses = load_expenses()
     total_spent = sum(expense['Amount'] for expense in expenses)
@@ -104,7 +104,7 @@ def index():
 @app.route('/add', methods=['POST'])
 def add_expense():
     if not session.get('logged_in'):
-        return redirect('/login')
+        return redirect(url_for('login'))
 
     date = request.form['date']
     description = request.form['description']
@@ -121,7 +121,7 @@ def add_expense():
 @app.route('/set_budget', methods=['POST'])
 def set_budget():
     if not session.get('logged_in'):
-        return redirect('/login')
+        return redirect(url_for('login'))
 
     budget = request.form['budget']
     try:
@@ -133,10 +133,11 @@ def set_budget():
 @app.route('/download')
 def download():
     if not session.get('logged_in'):
-        return redirect('/login')
+        return redirect(url_for('login'))
+
     return send_file(DATA_FILE, as_attachment=True)
 
-# ---------- Run App ----------
+# ---------- Main ----------
 if __name__ == '__main__':
     print("✅ App is running!")
     app.run(debug=True, host='0.0.0.0', port=5000)
